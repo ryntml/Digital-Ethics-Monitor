@@ -8,10 +8,11 @@ from . import models, schemas
 # ---------- USER ----------
 
 def create_user(db: Session, user: schemas.UserCreate) -> models.User:
+    hashed_pw = hash_password(user.password)
     db_user = models.User(
         username=user.username,
         email=user.email,
-        password_hash=hash_password(user.password),
+        password_hash=hashed_pw,
         role=user.role,
     )
     db.add(db_user)
@@ -24,12 +25,18 @@ def create_user(db: Session, user: schemas.UserCreate) -> models.User:
 def get_user(db: Session, user_id: int):
     return db.query(models.User).filter(models.User.id == user_id).first()
 
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
+
 
 # ---------- AI DECISION ----------
 
-def create_ai_decision(db: Session, decision: schemas.AIDecisionCreate) -> models.AIDecision:
+def create_ai_decision(db: Session, decision: schemas.AIDecisionCreate, owner_id: int) -> models.AIDecision:
     db_decision = models.AIDecision(
-        owner_id=decision.owner_id,
+        owner_id=owner_id,
         decision_label=decision.decision_label,
         score=decision.score,
         sensitive_attribute=decision.sensitive_attribute,
@@ -46,10 +53,13 @@ def get_ai_decision(db: Session, decision_id: int):
 
 # ---------- DECISION LOG ----------
 
-def create_decision_log(db: Session, log: schemas.DecisionLogCreate) -> models.DecisionLog:
+def create_decision_log(db: Session, log: schemas.DecisionLogCreate, actor_id: int, log_hash: str) -> models.DecisionLog:
     db_log = models.DecisionLog(
         decision_id=log.decision_id,
+        actor_user_id=actor_id,
+        event_type=log.event_type,
         message=log.message,
+        hash=log_hash
     )
     db.add(db_log)
     db.commit()
