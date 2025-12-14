@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import Optional, List
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
@@ -70,7 +70,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 
     return payload
 
-def require_roles(allowed_roles: list[str]):
+def require_roles(allowed_roles: List[str]):
     def role_checker(user_payload: dict = Depends(get_current_user)):
         user_role = user_payload.get("role")
 
