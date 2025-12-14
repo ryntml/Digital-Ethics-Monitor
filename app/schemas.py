@@ -24,6 +24,9 @@ class UserRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class UserRoleUpdate(BaseModel):
+    role: str
+
 # ---------- AI DECISION ----------
 
 class AIDecisionBase(BaseModel):
@@ -33,7 +36,7 @@ class AIDecisionBase(BaseModel):
 
 
 class AIDecisionCreate(AIDecisionBase):
-    owner_id: int
+    pass
 
 
 class AIDecisionRead(AIDecisionBase):
@@ -48,15 +51,18 @@ class AIDecisionRead(AIDecisionBase):
 
 class DecisionLogBase(BaseModel):
     message: constr(strip_whitespace=True, min_length=5, max_length=5000)
+    event_type: str = "SYSTEM"
 
 
 class DecisionLogCreate(DecisionLogBase):
-    decision_id: int
+    decision_id: Optional[int] = None
 
 
 class DecisionLogRead(DecisionLogBase):
     id: int
-    decision_id: int
+    decision_id: Optional[int]
+    actor_user_id: Optional[int]
+    hash: str
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -65,6 +71,12 @@ class DecisionLogRead(DecisionLogBase):
 # Karar + logları bir arada döndürmek istersek kullanırız (ileride)
 class AIDecisionWithLogs(AIDecisionRead):
     logs: List[DecisionLogRead] = []
+
+class DashboardStats(BaseModel):
+    total_decisions: int
+    bias_count: int
+    fairness_score: float
+    system_health: int
 
 class LoginRequest(BaseModel):
     username: str
