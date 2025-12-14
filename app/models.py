@@ -11,6 +11,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=False)
     role = Column(String(50), nullable=False, default="analyst")
 
     decisions = relationship("AIDecision", back_populates="owner")
@@ -35,14 +36,13 @@ class AIDecision(Base):
 
 
 class DecisionLog(Base):
-    """
-    Kararla ilgili açıklama / etik değerlendirme logları.
-    """
     __tablename__ = "decision_logs"
 
     id = Column(Integer, primary_key=True, index=True)
     decision_id = Column(Integer, ForeignKey("ai_decisions.id"), nullable=False)
     message = Column(Text, nullable=False)
+    hash = Column(String(64), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     decision = relationship("AIDecision", back_populates="logs")
+

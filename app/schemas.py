@@ -13,15 +13,16 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    pass
+    password: constr(min_length=6, max_length=128)
 
 
-class UserRead(UserBase):
+class UserRead(BaseModel):
     id: int
+    username: str
+    email: EmailStr
+    role: str
 
-    # Pydantic v2: ORM objelerinden model oluşturabilmek için
     model_config = ConfigDict(from_attributes=True)
-
 
 # ---------- AI DECISION ----------
 
@@ -64,3 +65,12 @@ class DecisionLogRead(DecisionLogBase):
 # Karar + logları bir arada döndürmek istersek kullanırız (ileride)
 class AIDecisionWithLogs(AIDecisionRead):
     logs: List[DecisionLogRead] = []
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
