@@ -15,7 +15,7 @@ class User(Base):
     role = Column(String(50), nullable=False, default="analyst")
 
     decisions = relationship("AIDecision", back_populates="owner")
-
+    audit_logs = relationship("DecisionLog", back_populates="actor")
 
 class AIDecision(Base):
     """
@@ -39,10 +39,12 @@ class DecisionLog(Base):
     __tablename__ = "decision_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    decision_id = Column(Integer, ForeignKey("ai_decisions.id"), nullable=False)
+    decision_id = Column(Integer, ForeignKey("ai_decisions.id"), nullable=True)
+    actor_user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    event_type = Column(String(50), nullable=False, default="SYSTEM")
     message = Column(Text, nullable=False)
     hash = Column(String(64), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     decision = relationship("AIDecision", back_populates="logs")
-
+    actor = relationship("User", back_populates="audit_logs")
