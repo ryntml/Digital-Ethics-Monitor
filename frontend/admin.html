@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Digital Ethics Monitor</title>
+    <meta name="description" content="AI Ethics Admin Panel - Logs and Reports">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+
+    <!-- Main Container -->
+    <div class="flex">
+
+        <!-- Sidebar -->
+        <aside class="w-64 min-h-screen bg-slate-900/50 backdrop-blur-xl border-r border-white/10 flex flex-col">
+            <!-- Logo -->
+            <div class="p-6 border-b border-white/10">
+                <h1 class="text-xl font-bold text-white">DEM</h1>
+                <p class="text-xs text-gray-400 mt-1">Digital Ethics Monitor</p>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="dashboard.html"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+
+                <a href="admin.html"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-600/20 text-purple-300 border border-purple-500/30">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="font-medium">Admin Panel</span>
+                </a>
+            </nav>
+
+            <!-- User Info -->
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/5">
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                        <span id="userInitials">A</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-white" id="userName">Admin</p>
+                        <p class="text-xs text-gray-400">Yönetici</p>
+                    </div>
+                    <button onclick="logout()" class="text-gray-400 hover:text-red-400 transition-colors"
+                        title="Çıkış Yap">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <!-- Header -->
+            <header class="bg-slate-900/50 backdrop-blur-xl border-b border-white/10 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Admin Panel</h2>
+                        <p class="text-gray-400 text-sm mt-1">Sistem logları ve raporlar</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button
+                            class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all">
+                            Rapor İndir
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Admin Content -->
+            <div class="p-6 space-y-6">
+
+                <!-- Filters -->
+                <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Filtreler</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <!-- Date Range -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Başlangıç Tarihi</label>
+                            <input type="date" id="startDate"
+                                class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Bitiş Tarihi</label>
+                            <input type="date" id="endDate"
+                                class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+
+                        <!-- Log Level -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Log Seviyesi</label>
+                            <select id="logLevel"
+                                class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <option value="">Tümü</option>
+                                <option value="info">Info</option>
+                                <option value="warning">Warning</option>
+                                <option value="error">Error</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+
+                        <!-- Search -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-300 mb-2">Arama</label>
+                            <input type="text" id="searchQuery" placeholder="Log ID, mesaj..."
+                                class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        </div>
+                    </div>
+
+                    <div class="mt-4 flex justify-end">
+                        <button onclick="applyFilters()"
+                            class="px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-all">
+                            Filtrele
+                        </button>
+                    </div>
+                </div>
+
+                <!-- System Logs Table -->
+                <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">Sistem Logları</h3>
+                        <span class="text-sm text-gray-400">Toplam: <span id="totalLogs">0</span></span>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/10">
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Zaman</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Log ID</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Seviye</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Kaynak</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Mesaj</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody" class="text-gray-300 text-sm">
+                                <!-- Data will be populated by JavaScript -->
+                                <tr class="border-b border-white/5">
+                                    <td colspan="6" class="text-center py-8 text-gray-500">Veri yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="mt-4 flex items-center justify-between">
+                        <div class="text-sm text-gray-400">
+                            Sayfa <span id="currentPage">1</span> / <span id="totalPages">1</span>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="previousPage()"
+                                class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-all disabled:opacity-50"
+                                id="prevButton">
+                                Önceki
+                            </button>
+                            <button onclick="nextPage()"
+                                class="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-all disabled:opacity-50"
+                                id="nextButton">
+                                Sonraki
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Decision Reports -->
+                <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">AI Karar Raporları</h3>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/10">
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Rapor ID</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Tarih</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Model</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Karar Sayısı</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Bias Oranı</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Adalet Skoru</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTableBody" class="text-gray-300 text-sm">
+                                <!-- Data will be populated by JavaScript -->
+                                <tr class="border-b border-white/5">
+                                    <td colspan="7" class="text-center py-8 text-gray-500">Veri yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        // Placeholder functions - Will be implemented in main.js
+        function applyFilters() {
+            console.log('Filters applied - API integration pending');
+        }
+
+        function previousPage() {
+            console.log('Previous page - API integration pending');
+        }
+
+        function nextPage() {
+            console.log('Next page - API integration pending');
+        }
+
+        function logout() {
+            // Will be implemented in auth.js
+            console.log('Logout - API integration pending');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Digital Ethics Monitor</title>
+    <meta name="description" content="AI Ethics Monitoring Dashboard">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen">
+
+    <!-- Main Container -->
+    <div class="flex">
+
+        <!-- Sidebar -->
+        <aside class="w-64 min-h-screen bg-slate-900/50 backdrop-blur-xl border-r border-white/10 flex flex-col">
+            <!-- Logo -->
+            <div class="p-6 border-b border-white/10">
+                <h1 class="text-xl font-bold text-white">DEM</h1>
+                <p class="text-xs text-gray-400 mt-1">Digital Ethics Monitor</p>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 p-4 space-y-2">
+                <a href="dashboard.html"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-purple-600/20 text-purple-300 border border-purple-500/30">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+
+                <a href="admin.html"
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="font-medium">Admin Panel</span>
+                </a>
+            </nav>
+
+            <!-- User Info -->
+            <div class="p-4 border-t border-white/10">
+                <div class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-white/5">
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center text-white font-semibold">
+                        <span id="userInitials">U</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-white" id="userName">Kullanıcı</p>
+                        <p class="text-xs text-gray-400">Aktif</p>
+                    </div>
+                    <button onclick="logout()" class="text-gray-400 hover:text-red-400 transition-colors"
+                        title="Çıkış Yap">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <!-- Header -->
+            <header class="bg-slate-900/50 backdrop-blur-xl border-b border-white/10 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">AI Ethics Dashboard</h2>
+                        <p class="text-gray-400 text-sm mt-1">Gerçek zamanlı etik ve bias izleme</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+                            <span class="text-green-400 text-sm font-medium">● Sistem Aktif</span>
+                        </div>
+                        <span class="text-gray-400 text-sm" id="lastUpdate">Son Güncelleme: --:--</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="p-6 space-y-6">
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Total Decisions -->
+                    <div
+                        class="backdrop-blur-xl bg-gradient-to-br from-purple-500/10 to-blue-500/10 border border-white/10 rounded-xl p-6 hover:shadow-xl hover:shadow-purple-500/20 transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-gray-300 text-sm font-medium">Toplam Karar</h3>
+                            <div class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-white" id="totalDecisions">0</p>
+                        <p class="text-xs text-gray-400 mt-2">Son 24 saat</p>
+                    </div>
+
+                    <!-- Bias Detected -->
+                    <div
+                        class="backdrop-blur-xl bg-gradient-to-br from-red-500/10 to-orange-500/10 border border-white/10 rounded-xl p-6 hover:shadow-xl hover:shadow-red-500/20 transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-gray-300 text-sm font-medium">Bias Tespit Edildi</h3>
+                            <div class="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-white" id="biasCount">0</p>
+                        <p class="text-xs text-gray-400 mt-2">Risk seviyesi: <span id="biasLevel"
+                                class="text-red-400">--</span></p>
+                    </div>
+
+                    <!-- Fairness Score -->
+                    <div
+                        class="backdrop-blur-xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-white/10 rounded-xl p-6 hover:shadow-xl hover:shadow-green-500/20 transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-gray-300 text-sm font-medium">Adalet Skoru</h3>
+                            <div class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-white" id="fairnessScore">0.0</p>
+                        <p class="text-xs text-gray-400 mt-2">Maksimum: 1.0</p>
+                    </div>
+
+                    <!-- System Health -->
+                    <div
+                        class="backdrop-blur-xl bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-white/10 rounded-xl p-6 hover:shadow-xl hover:shadow-blue-500/20 transition-all">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-gray-300 text-sm font-medium">Sistem Sağlığı</h3>
+                            <div class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <p class="text-3xl font-bold text-white" id="systemHealth">100%</p>
+                        <p class="text-xs text-gray-400 mt-2">Tüm servisler çalışıyor</p>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Bias Distribution Chart -->
+                    <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Bias Dağılımı</h3>
+                        <div class="h-64">
+                            <canvas id="biasChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Fairness Metrics Chart -->
+                    <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Adalet Metrikleri</h3>
+                        <div class="h-64">
+                            <canvas id="fairnessChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decision Timeline -->
+                <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Karar Zaman Çizelgesi</h3>
+                    <div class="h-72">
+                        <canvas id="timelineChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Recent Decisions Table -->
+                <div class="backdrop-blur-xl bg-slate-900/50 border border-white/10 rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">Son Kararlar</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-white/10">
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Zaman</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Karar ID</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Model</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Sonuç</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Bias Riski</th>
+                                    <th class="text-left py-3 px-4 text-gray-400 font-medium text-sm">Durum</th>
+                                </tr>
+                            </thead>
+                            <tbody id="decisionsTableBody" class="text-gray-300 text-sm">
+                                <!-- Data will be populated by JavaScript -->
+                                <tr class="border-b border-white/5">
+                                    <td colspan="6" class="text-center py-8 text-gray-500">Veri yükleniyor...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/main.js"></script>
+</body>
+
+</html>

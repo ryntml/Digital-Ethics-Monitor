@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Ethics Monitor - Giriş</title>
+    <meta name="description" content="Digital Ethics Monitor - Secure and Transparent AI Framework">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen flex items-center justify-center p-4">
+    
+    <!-- Background Pattern -->
+    <div class="absolute inset-0 overflow-hidden opacity-20">
+        <div class="absolute top-0 left-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-0 right-0 w-96 h-96 bg-purple-500 rounded-full blur-3xl animate-pulse delay-1000"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="relative z-10 w-full max-w-md">
+        <!-- Logo/Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2 tracking-tight">
+                Digital Ethics Monitor
+            </h1>
+            <p class="text-gray-300 text-sm">Secure & Transparent AI Framework</p>
+        </div>
+
+        <!-- Login Form Card -->
+        <div class="backdrop-blur-xl bg-white/10 rounded-2xl shadow-2xl border border-white/20 p-8">
+            <h2 class="text-2xl font-semibold text-white mb-6">Giriş Yap</h2>
+            
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mb-4 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm">
+                <span id="errorText"></span>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-6">
+                <!-- Email Input -->
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-200 mb-2">
+                        E-posta
+                    </label>
+                    <input 
+                        type="email" 
+                        id="email" 
+                        name="email"
+                        required
+                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                        placeholder="ornek@mail.com"
+                    >
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-200 mb-2">
+                        Şifre
+                    </label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        name="password"
+                        required
+                        class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+                        placeholder="••••••••"
+                    >
+                </div>
+
+                <!-- Remember Me -->
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input 
+                            type="checkbox" 
+                            id="rememberMe"
+                            class="w-4 h-4 bg-white/5 border-white/10 rounded text-purple-500 focus:ring-purple-500 focus:ring-offset-0"
+                        >
+                        <span class="ml-2 text-sm text-gray-300">Beni Hatırla</span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <button 
+                    type="submit"
+                    class="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+                >
+                    <span id="loginButtonText">Giriş Yap</span>
+                    <span id="loginButtonSpinner" class="hidden">
+                        <svg class="animate-spin h-5 w-5 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Giriş Yapılıyor...
+                    </span>
+                </button>
+            </form>
+
+            <!-- Footer Info -->
+            <div class="mt-6 text-center text-sm text-gray-400">
+                <p>Sisteme erişim için JWT kimlik doğrulaması gereklidir</p>
+            </div>
+        </div>
+
+        <!-- Version Info -->
+        <div class="text-center mt-6 text-gray-400 text-xs">
+            <p>DEM v1.0 | Secure Computing Project</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
