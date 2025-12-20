@@ -133,7 +133,7 @@ def create_decision(
     user_payload=Depends(require_roles(["admin", "analyst"])),
 ):
 
-    return crud.create_ai_decision(db, decision, owner_id=user_payload["id"]))
+    return crud.create_ai_decision(db, decision, owner_id=user_payload["id"])
 
 
 @app.get(
@@ -160,15 +160,15 @@ def create_log(
     db: Session = Depends(get_db),
     user_payload=Depends(require_roles(["admin"])),
 ):
-   if log.decision_id:
-       decision = crud.get_ai_decision(db, log.decision_id)
-       if not decision:
-           raise HTTPException(
-              status_code=status.HTTP_400_BAD_REQUEST,
-              detail="Decision does not exist.",
-        )
+    if log.decision_id:
+        decision = crud.get_ai_decision(db, log.decision_id)
+        if not decision:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Decision does not exist.",
+            )
 
-log_hash = generate_hash(log.message + str(user_payload["id"]))
+    log_hash = generate_hash(log.message + str(user_payload["id"]))
 
     db_log = models.DecisionLog(
         decision_id=log.decision_id,

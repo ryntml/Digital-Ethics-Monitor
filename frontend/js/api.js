@@ -1,13 +1,12 @@
 /**
  * Digital Ethics Monitor - API Client
  * 
- * Bu dosya backend API ile iletişim kurmak için kullanılacaktır.
- * Şu anda placeholder fonksiyonlar içermektedir.
- * Backend hazır olduğunda bu fonksiyonlar gerçek API endpoint'leri ile bağlanacaktır.
+ * Bu dosya backend API ile iletişim kurmak için kullanılır.
+ * Backend hazır - gerçek API endpoint'leri ile bağlantılı.
  */
 
-// API Base URL - Backend hazır olduğunda güncellenecek
-const API_BASE_URL = 'http://localhost:8000/api';
+// API Base URL - Backend adresi
+const API_BASE_URL = 'http://localhost:8000';
 
 /**
  * API Client Class
@@ -65,7 +64,7 @@ class APIClient {
      */
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
-        
+
         try {
             const response = await fetch(url, {
                 ...options,
@@ -148,47 +147,54 @@ const api = new APIClient();
  */
 
 // ============================================
-// AUTHENTICATION ENDPOINTS (PLACEHOLDER)
+// AUTHENTICATION ENDPOINTS
 // ============================================
 
 /**
  * Login - Kullanıcı girişi
- * @param {string} email 
+ * @param {string} username - email veya username
  * @param {string} password 
- * @returns {Promise<object>} - { token, user }
+ * @returns {Promise<object>} - { access_token, token_type }
  */
-async function loginUser(email, password) {
-    // TODO: Backend API bağlantısı yapılacak
-    // return api.post('/auth/login', { email, password }, { auth: false });
-    
-    console.log('LOGIN API CALL (Placeholder):', { email, password });
-    
-    // Simüle edilen başarılı login
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                token: 'placeholder_jwt_token_12345',
-                user: {
-                    id: 1,
-                    email: email,
-                    name: 'Test User',
-                    role: 'admin'
-                }
-            });
-        }, 500);
-    });
+async function loginUser(username, password) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'Giriş başarısız');
+        }
+
+        // Token'ı kaydet
+        api.setToken(data.access_token);
+
+        // user bilgisini almak için /users/me çağır
+        const userResponse = await fetch(`${API_BASE_URL}/users/me`, {
+            headers: { 'Authorization': `Bearer ${data.access_token}` }
+        });
+        const user = await userResponse.json();
+
+        return {
+            token: data.access_token,
+            user: user
+        };
+    } catch (error) {
+        console.error('Login error:', error);
+        throw error;
+    }
 }
 
 /**
  * Logout - Kullanıcı çıkışı
  */
 async function logoutUser() {
-    // TODO: Backend API bağlantısı yapılacak
-    // return api.post('/auth/logout');
-    
-    console.log('LOGOUT API CALL (Placeholder)');
     api.clearToken();
-    return Promise.resolve({ success: true });
+    return { success: true };
 }
 
 // ============================================
@@ -200,22 +206,26 @@ async function logoutUser() {
  * @returns {Promise<object>}
  */
 async function getDashboardStats() {
-    // TODO: Backend API bağlantısı yapılacak
-    // return api.get('/dashboard/stats');
-    
-    console.log('GET DASHBOARD STATS (Placeholder)');
-    
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                totalDecisions: 1247,
-                biasCount: 23,
-                biasLevel: 'Düşük',
-                fairnessScore: 0.87,
-                systemHealth: 98
-            });
-        }, 300);
-    });
+    try {
+        const response = await api.get('/stats/dashboard');
+        return {
+            totalDecisions: response.total_decisions,
+            biasCount: response.bias_count,
+            biasLevel: response.bias_count > 10 ? 'Yüksek' : response.bias_count > 5 ? 'Orta' : 'Düşük',
+            fairnessScore: response.fairness_score,
+            systemHealth: response.system_health
+        };
+    } catch (error) {
+        console.error('Dashboard stats error:', error);
+        // Fallback değerler
+        return {
+            totalDecisions: 0,
+            biasCount: 0,
+            biasLevel: '--',
+            fairnessScore: 0,
+            systemHealth: 100
+        };
+    }
 }
 
 /**
@@ -227,9 +237,9 @@ async function getDashboardStats() {
 async function getDecisions(limit = 10, offset = 0) {
     // TODO: Backend API bağlantısı yapılacak
     // return api.get(`/decisions?limit=${limit}&offset=${offset}`);
-    
+
     console.log('GET DECISIONS (Placeholder):', { limit, offset });
-    
+
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve({
@@ -247,9 +257,9 @@ async function getDecisions(limit = 10, offset = 0) {
 async function getBiasAnalytics() {
     // TODO: Backend API bağlantısı yapılacak
     // return api.get('/analytics/bias');
-    
+
     console.log('GET BIAS ANALYTICS (Placeholder)');
-    
+
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve({
@@ -267,9 +277,9 @@ async function getBiasAnalytics() {
 async function getFairnessMetrics() {
     // TODO: Backend API bağlantısı yapılacak
     // return api.get('/analytics/fairness');
-    
+
     console.log('GET FAIRNESS METRICS (Placeholder)');
-    
+
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve({
@@ -282,7 +292,7 @@ async function getFairnessMetrics() {
 }
 
 // ============================================
-// ADMIN ENDPOINTS (PLACEHOLDER)
+// ADMIN ENDPOINTS
 // ============================================
 
 /**
@@ -291,22 +301,28 @@ async function getFairnessMetrics() {
  * @returns {Promise<object>}
  */
 async function getLogs(filters = {}) {
-    // TODO: Backend API bağlantısı yapılacak
-    // const queryString = new URLSearchParams(filters).toString();
-    // return api.get(`/admin/logs?${queryString}`);
-    
-    console.log('GET LOGS (Placeholder):', filters);
-    
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                logs: [],
-                total: 0,
-                page: 1,
-                totalPages: 1
-            });
-        }, 300);
-    });
+    try {
+        let query = `limit=${filters.pageSize || 100}`;
+        if (filters.logLevel) query += `&event_type=${filters.logLevel}`;
+
+        const logs = await api.get(`/admin/logs?${query}`);
+        return {
+            logs: logs.map(log => ({
+                id: log.id,
+                timestamp: log.created_at,
+                level: log.event_type,
+                source: 'System',
+                message: log.message,
+                hash: log.hash
+            })),
+            total: logs.length,
+            page: 1,
+            totalPages: 1
+        };
+    } catch (error) {
+        console.error('Get logs error:', error);
+        return { logs: [], total: 0, page: 1, totalPages: 1 };
+    }
 }
 
 /**
@@ -318,9 +334,9 @@ async function getLogs(filters = {}) {
 async function getReports(page = 1, pageSize = 10) {
     // TODO: Backend API bağlantısı yapılacak
     // return api.get(`/admin/reports?page=${page}&pageSize=${pageSize}`);
-    
+
     console.log('GET REPORTS (Placeholder):', { page, pageSize });
-    
+
     return new Promise((resolve) => {
         setTimeout(() => {
             resolve({
@@ -340,9 +356,9 @@ async function getReports(page = 1, pageSize = 10) {
  */
 async function downloadReport(reportId) {
     // TODO: Backend API bağlantısı yapılacak
-    
+
     console.log('DOWNLOAD REPORT (Placeholder):', reportId);
-    
+
     return Promise.resolve(new Blob(['Placeholder report data'], { type: 'application/pdf' }));
 }
 
