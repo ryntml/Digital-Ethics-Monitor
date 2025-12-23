@@ -10,7 +10,7 @@ from . import models, schemas, crud
 from .database import engine, Base, get_db
 from .security import verify_password, create_access_token
 from .security import get_current_user, require_roles  # get_current_user swagger oauth için gerekli
-from .security import generate_hash
+from .security import generate_hash, encrypt_data
 from .ethics import evaluate_ethics
 
 
@@ -87,10 +87,14 @@ def update_user_role(user_id: int,
     user = crud.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-
+        
+try:
     user.role = role_data.role
     db.commit()
     return {"status": "success", "new_role": user.role}
+except Exception as e:
+    db.rollback()
+    raise HTTPException(status_code=500, detail="Database error during role update")
 
 
 # --------- AUTH ---------
@@ -177,12 +181,15 @@ def create_log(
         message=log.message,
         hash=log_hash,
     )
-
+    
+try:
     db.add(db_log)
     db.commit()
     db.refresh(db_log)
-    
     return db_log
+except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error creating log")
 
 
 # --------- ETHICS ENGINE ---------
@@ -203,11 +210,15 @@ def evaluate_decision_ethics(
         decision_in.sensitive_attribute,
     )
 
-    db_decision = models.AIDecision(
-        owner_id=user_payload["id"],
-        decision_label=status_label,
-        score=decision_in.score,
-        sensitive_attribute=decision_in.sensitive_attribute
+    try:
+        # 1. Kararı Kaydet (Hassas Veriyi Şifrele)
+        encrypted_attr = encrypt_data(decision_in.sensitive_attribute)
+        
+        db_decision = models.AIDecision(
+            owner_id=user_payload["id"],
+            decision_label=status_label,
+            score=decision_in.score,
+            sensitive_attribute=encrypted_attr # Şifreli kaydet
     )
     db.add(db_decision)
     db.commit()
@@ -234,6 +245,11 @@ def evaluate_decision_ethics(
         "explanation": explanation,
         "log_hash": log_hash,
     }
+
+except Exception as e:
+    db.rollback() # Bir hata olursa yapılanları geri al
+    print(f"Error during ethics evaluation: {e}")
+    raise HTTPException(status_code=500, detail="System error during evaluation")
 
 # --------- ADMIN AUDIT LOGS ---------
 
