@@ -28,7 +28,7 @@ class AIDecision(Base):
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     decision_label = Column(String(50), nullable=False)
     score = Column(Float, nullable=False)
-    sensitive_attribute = Column(String(50), nullable=True)
+    sensitive_attribute = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     owner = relationship("User", back_populates="decisions")
