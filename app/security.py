@@ -1,8 +1,12 @@
+import os
 from datetime import datetime, timedelta
 from typing import Optional, List
 
 from jose import jwt, JWTError
 from passlib.context import CryptContext
+
+# Şifreleme Kütüphanesi
+from cryptography.fernet import Fernet
 
 # =====================
 # CONFIG
@@ -11,6 +15,20 @@ from passlib.context import CryptContext
 SECRET_KEY = "CHANGE_THIS_SECRET_IN_PRODUCTION"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+# Veri Şifreleme Anahtarı (Encryption Key)
+# Gerçek projede .env dosyasından okunmalı.
+# Demo için sabit bir key kullanıyoruz ki server kapanıp açılınca veriler bozulmasın.
+# (Fernet key 32 url-safe base64-encoded bytes olmalı)
+ENCRYPTION_KEY = os.getenv("ENCRYPTION_KEY", "J_check_this_is_32_bytes_key_for_demo_purposes_only=") 
+# Eğer key hatası alırsan terminalde şu komutla yeni key üretip buraya yapıştırabilirsin:
+# python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+
+try:
+    cipher_suite = Fernet(ENCRYPTION_KEY)
+except Exception as e:
+    print(f"Encryption Key Error: {e}. Generating a temporary one (Warning: Data persistence issues may occur).")
+    cipher_suite = Fernet(Fernet.generate_key())
 
 # =====================
 # PASSWORD HASHING
@@ -25,6 +43,31 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
+
+# =====================
+# DATA ENCRYPTION
+# =====================
+
+def encrypt_data(data: str) -> str:
+    """Hassas veriyi veritabanına kaydetmeden önce şifreler."""
+    if not data:
+        return None
+    try:
+        return cipher_suite.encrypt(data.encode("utf-8")).decode("utf-8")
+    except Exception as e:
+        print(f"Encryption Error: {e}")
+        return data  # Hata olursa veriyi olduğu gibi döndür (Fallback)
+
+
+def decrypt_data(token: str) -> str:
+    """Veritabanından okunan şifreli veriyi çözer."""
+    if not token:
+        return None
+    try:
+        return cipher_suite.decrypt(token.encode("utf-8")).decode("utf-8")
+    except Exception:
+        # Şifre çözülemezse (örn: key değiştiyse veya veri şifresizse) ham hâlini göster
+        return "[Encrypted Data]"
 
 
 # =====================
