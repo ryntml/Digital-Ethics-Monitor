@@ -1,0 +1,35 @@
+# Mevcut requirements.txt'nize ekleyin:
+
+# AI/ML Libraries (Zaten var olabilir)
+pandas>=1.5.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+lime>=0.2.0.1
+
+# Security Libraries (YENİ)
+PyJWT>=2.8.0
+cryptography>=41.0.0
+werkzeug>=3.0.0
+
+# API Framework (Birini seçin)
+Flask>=3.0.0              # VEYA
+fastapi>=0.104.0
+uvicorn>=0.24.0           # FastAPI için gerekli
+
+# JSON Processing
+orjson>=3.9.0
+
+# CORS Support (API için)
+flask-cors>=4.0.0         # Flask kullanıyorsanız
+# VEYA
+fastapi-cors>=0.0.6       # FastAPI kullanıyorsanız
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# Testing (Opsiyonel)
+pytest>=7.4.0
+pytest-cov>=4.1.0
+
+# Logging
+python-json-logger>=2.0.0
