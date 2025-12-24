@@ -1,3 +1,4 @@
+# main.py
 from datetime import timedelta
 from typing import List, Optional
 
@@ -63,9 +64,11 @@ async def validate_request_size(request: Request, call_next):
 
 @app.post("/users/", response_model=schemas.UserRead, tags=["users"])
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    # Aynı kullanıcı adı veya email var mı?
-    existing = crud.get_user_by_email(db, user.email)
-    if existing:
+    # ✅ Aynı email veya username var mı?
+    existing_email = crud.get_user_by_email(db, user.email)
+    existing_username = crud.get_user_by_username(db, user.username)
+
+    if existing_email or existing_username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username or email already exists.",
@@ -73,28 +76,33 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return crud.create_user(db, user)
 
+
+
 @app.get("/users/me", response_model=schemas.UserRead, tags=["users"])
 def read_users_me(current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
     return crud.get_user(db, current_user["id"])
 
 
 @app.patch("/users/{user_id}/role", tags=["admin"])
-def update_user_role(user_id: int,
-                     role_data: schemas.UserRoleUpdate,
-                     db: Session = Depends(get_db),
-                     current_user=Depends(require_roles(["admin"]))
+def update_user_role(
+    user_id: int,
+    role_data: schemas.UserRoleUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_roles(["admin"]))
 ):
     user = crud.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
-try:
-    user.role = role_data.role
-    db.commit()
-    return {"status": "success", "new_role": user.role}
-except Exception as e:
-    db.rollback()
-    raise HTTPException(status_code=500, detail="Database error during role update")
+
+    # ✅ FIX: try/except fonksiyonun İÇİNDE olmalı
+    try:
+        user.role = role_data.role
+        db.commit()
+        db.refresh(user)
+        return {"status": "success", "new_role": user.role}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error during role update")
 
 
 # --------- AUTH ---------
@@ -136,8 +144,12 @@ def create_decision(
     db: Session = Depends(get_db),
     user_payload=Depends(require_roles(["admin", "analyst"])),
 ):
-
-    return crud.create_ai_decision(db, decision, owner_id=user_payload["id"])
+    # Sevde'nin create_ai_decision yapısına dokunmuyorum
+    try:
+        return crud.create_ai_decision(db, decision, owner_id=user_payload["id"])
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Error creating AI decision")
 
 
 @app.get(
@@ -145,7 +157,11 @@ def create_decision(
     response_model=schemas.AIDecisionRead,
     tags=["decisions"],
 )
-def read_decision(decision_id: int, db: Session = Depends(get_db), user_payload=Depends(require_roles(["admin", "analyst", "viewer"]))):
+def read_decision(
+    decision_id: int,
+    db: Session = Depends(get_db),
+    user_payload=Depends(require_roles(["admin", "analyst", "viewer"]))
+):
     db_decision = crud.get_ai_decision(db, decision_id)
     if not db_decision:
         raise HTTPException(status_code=404, detail="Decision not found")
@@ -172,22 +188,25 @@ def create_log(
                 detail="Decision does not exist.",
             )
 
-    log_hash = generate_hash(log.message + str(user_payload["id"]))
+    # ✅ Daha sağlam hash: mesaj + kullanıcı + event_type + decision_id
+    base = f"{log.message}|{user_payload['id']}|{log.event_type}|{log.decision_id}"
+    log_hash = generate_hash(base)
 
     db_log = models.DecisionLog(
         decision_id=log.decision_id,
-        actor_user_id=user_payload["id"], # Logu yazan adminin ID'si
-        event_type=log.event_type,        # "SYSTEM", "WARNING" vb.
+        actor_user_id=user_payload["id"],  # Logu yazan adminin ID'si
+        event_type=log.event_type,         # "SYSTEM", "WARNING" vb.
         message=log.message,
         hash=log_hash,
     )
-    
-try:
-    db.add(db_log)
-    db.commit()
-    db.refresh(db_log)
-    return db_log
-except Exception as e:
+
+    # ✅ FIX: try/except fonksiyonun İÇİNDE olmalı
+    try:
+        db.add(db_log)
+        db.commit()
+        db.refresh(db_log)
+        return db_log
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Error creating log")
 
@@ -203,53 +222,59 @@ def evaluate_decision_ethics(
     db: Session = Depends(get_db),
     user_payload=Depends(require_roles(["admin", "analyst"])),
 ):
-
     status_label, explanation = evaluate_ethics(
         decision_in.decision_label,
         decision_in.score,
         decision_in.sensitive_attribute,
     )
 
+    # ✅ FIX: try/except blokları doğru hizalanmalı
     try:
-        # 1. Kararı Kaydet (Hassas Veriyi Şifrele)
+        # 1) Kararı Kaydet (Hassas Veriyi Şifrele)
         encrypted_attr = encrypt_data(decision_in.sensitive_attribute)
-        
+
         db_decision = models.AIDecision(
             owner_id=user_payload["id"],
-            decision_label=status_label,
+            decision_label=status_label,  # etik sonucu label olarak yazıyorsun, aynen bırakıyorum
             score=decision_in.score,
-            sensitive_attribute=encrypted_attr # Şifreli kaydet
-    )
-    db.add(db_decision)
-    db.commit()
-    db.refresh(db_decision)
+            sensitive_attribute=encrypted_attr
+        )
 
-    log_message = f"ETHICS EVALUATION: User {user_payload['sub']} processed decision. Result: {status_label}. Reason: {explanation}"
-  
-    log_hash = generate_hash(log_message + str(db_decision.id) + str(user_payload["id"]))
+        db.add(db_decision)
+        db.commit()
+        db.refresh(db_decision)
 
-    db_log = models.DecisionLog(
-        decision_id=db_decision.id,
-        actor_user_id=user_payload["id"],
-        event_type="ETHICS_EVALUATION",
-        message=log_message,
-        hash=log_hash,
-    )
+        # 2) Log oluştur
+        log_message = (
+            f"ETHICS EVALUATION: User {user_payload['sub']} processed decision. "
+            f"Result: {status_label}. Reason: {explanation}"
+        )
 
-    db.add(db_log)
-    db.commit()
+        log_hash = generate_hash(log_message + str(db_decision.id) + str(user_payload["id"]))
 
-    return {
-        "decision_id": db_decision.id,
-        "ethics_status": status_label,
-        "explanation": explanation,
-        "log_hash": log_hash,
-    }
+        db_log = models.DecisionLog(
+            decision_id=db_decision.id,
+            actor_user_id=user_payload["id"],
+            event_type="ETHICS_EVALUATION",
+            message=log_message,
+            hash=log_hash,
+        )
 
-except Exception as e:
-    db.rollback() # Bir hata olursa yapılanları geri al
-    print(f"Error during ethics evaluation: {e}")
-    raise HTTPException(status_code=500, detail="System error during evaluation")
+        db.add(db_log)
+        db.commit()
+
+        return {
+            "decision_id": db_decision.id,
+            "ethics_status": status_label,
+            "explanation": explanation,
+            "log_hash": log_hash,
+        }
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error during ethics evaluation: {e}")
+        raise HTTPException(status_code=500, detail="System error during evaluation")
+
 
 # --------- ADMIN AUDIT LOGS ---------
 
@@ -258,12 +283,12 @@ def read_audit_logs(
     limit: int = 100,
     event_type: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles(["admin"])) # Sadece ADMIN
+    current_user=Depends(require_roles(["admin"]))  # Sadece ADMIN
 ):
     query = db.query(models.DecisionLog)
     if event_type:
         query = query.filter(models.DecisionLog.event_type == event_type)
-    
+
     return query.order_by(models.DecisionLog.created_at.desc()).limit(limit).all()
 
 
@@ -272,16 +297,15 @@ def read_audit_logs(
 @app.get("/stats/dashboard", response_model=schemas.DashboardStats, tags=["dashboard"])
 def get_dashboard_stats(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user) # Login olan herkes görebilir
+    current_user=Depends(get_current_user)  # Login olan herkes görebilir
 ):
     total = db.query(models.AIDecision).count()
     biased = db.query(models.AIDecision).filter(models.AIDecision.decision_label == "BIASED").count()
-    
-    # Adalet skoru hesabı (1.0 = Mükemmel, 0.0 = Çok Kötü)
+
     fairness = 1.0
     if total > 0:
         fairness = 1.0 - (biased / total)
-    
+
     return {
         "total_decisions": total,
         "bias_count": biased,
