@@ -65,7 +65,7 @@ def create_ai_decision(db: Session, decision: schemas.AIDecisionCreate, owner_id
 def get_ai_decision(db: Session, decision_id: int):
     decision = db.query(models.AIDecision).filter(models.AIDecision.id == decision_id).first()
 
-# Okurken şifreyi çöz (Decryption)
+    # Okurken şifreyi çöz (Decryption)
     if decision and decision.sensitive_attribute:
         # DB objesini geçici olarak değiştiriyoruz (Commit etmediğimiz sürece DB'de değişmez)
         decision.sensitive_attribute = decrypt_data(decision.sensitive_attribute)

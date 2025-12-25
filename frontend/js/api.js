@@ -6,7 +6,7 @@
  */
 
 // API Base URL - Backend adresi
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://localhost:8001';
 
 /**
  * API Client Class
@@ -235,19 +235,20 @@ async function getDashboardStats() {
  * @returns {Promise<Array>}
  */
 async function getDecisions(limit = 10, offset = 0) {
-    // TODO: Backend API bağlantısı yapılacak
-    // return api.get(`/decisions?limit=${limit}&offset=${offset}`);
-
-    console.log('GET DECISIONS (Placeholder):', { limit, offset });
-
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                decisions: [],
-                total: 0
-            });
-        }, 300);
-    });
+    try {
+        // Get decisions from the database
+        const response = await api.get(`/decisions?limit=${limit}&offset=${offset}`);
+        return {
+            decisions: response || [],
+            total: response ? response.length : 0
+        };
+    } catch (error) {
+        console.error('Get decisions error:', error);
+        return {
+            decisions: [],
+            total: 0
+        };
+    }
 }
 
 /**
@@ -255,19 +256,23 @@ async function getDecisions(limit = 10, offset = 0) {
  * @returns {Promise<object>}
  */
 async function getBiasAnalytics() {
-    // TODO: Backend API bağlantısı yapılacak
-    // return api.get('/analytics/bias');
+    try {
+        // Call real AI fairness analysis endpoint
+        const response = await api.post('/ai/analyze-fairness', { dataset_name: 'biased' });
 
-    console.log('GET BIAS ANALYTICS (Placeholder)');
-
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                demographic_parity: [0.45, 0.55],
-                labels: ['Group A', 'Group B']
-            });
-        }, 300);
-    });
+        return {
+            demographic_parity: [response.metrics.demographic_parity_difference || 0],
+            labels: ['Bias Level'],
+            risk_analysis: response.risk_analysis,
+            explanation: response.explanation
+        };
+    } catch (error) {
+        console.error('Bias analytics error:', error);
+        return {
+            demographic_parity: [0.45, 0.55],
+            labels: ['Group A', 'Group B']
+        };
+    }
 }
 
 /**
@@ -275,20 +280,25 @@ async function getBiasAnalytics() {
  * @returns {Promise<object>}
  */
 async function getFairnessMetrics() {
-    // TODO: Backend API bağlantısı yapılacak
-    // return api.get('/analytics/fairness');
+    try {
+        // Call real AI metrics endpoint
+        const response = await api.get('/ai/metrics');
 
-    console.log('GET FAIRNESS METRICS (Placeholder)');
-
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                equalized_odds: 0.87,
-                demographic_parity: 0.92,
-                equal_opportunity: 0.85
-            });
-        }, 300);
-    });
+        return {
+            equalized_odds: Math.abs(response.equalized_odds) || 0,
+            demographic_parity: Math.abs(response.demographic_parity) || 0,
+            equal_opportunity: 0.85, // Placeholder for now
+            overall_risk: response.overall_risk,
+            datasets_analyzed: response.datasets_analyzed
+        };
+    } catch (error) {
+        console.error('Fairness metrics error:', error);
+        return {
+            equalized_odds: 0.87,
+            demographic_parity: 0.92,
+            equal_opportunity: 0.85
+        };
+    }
 }
 
 // ============================================

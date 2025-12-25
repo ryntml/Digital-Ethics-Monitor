@@ -86,3 +86,42 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+
+# ---------- AI ANALYSIS ----------
+
+class FairnessAnalysisRequest(BaseModel):
+    """Request for fairness analysis on a dataset"""
+    dataset_name: str = "default"  # "balanced" or "biased"
+
+
+class FairnessAnalysisResponse(BaseModel):
+    """Response from fairness analysis"""
+    dataset_name: str
+    metrics: dict
+    risk_analysis: dict
+    explanation: str
+
+
+class DecisionExplanationRequest(BaseModel):
+    """Request for explaining a single AI decision"""
+    income: float
+    age: int
+    credit_score: float
+
+
+class DecisionExplanationResponse(BaseModel):
+    """Response with LIME explanation for a decision"""
+    prediction: str
+    confidence: float
+    top_features: list
+    explanation_text: str
+
+
+class AIMetricsResponse(BaseModel):
+    """Response for dashboard AI metrics"""
+    demographic_parity: float
+    equalized_odds: float
+    overall_risk: str
+    datasets_analyzed: int
+

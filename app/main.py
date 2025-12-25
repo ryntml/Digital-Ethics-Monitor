@@ -33,6 +33,78 @@ app.add_middleware(  # frontend ile iletişim için gerekli
 @app.on_event("startup")
 def on_startup():
     Base.metadata.create_all(bind=engine)
+    
+    # Generate demo data if database is empty
+    generate_demo_data()
+
+
+def generate_demo_data():
+    """Generate sample data for dashboard demonstration"""
+    from .security import hash_password, encrypt_data, generate_hash
+    import random
+    
+    db = SessionLocal()
+    try:
+        # Check if demo user exists
+        demo_user = db.query(models.User).filter(models.User.email == "demo@test.com").first()
+        
+        if not demo_user:
+            # Create demo user
+            demo_user = models.User(
+                username="demo",
+                email="demo@test.com",
+                password_hash=hash_password("demo123"),
+                role="analyst"
+            )
+            db.add(demo_user)
+            db.commit()
+            db.refresh(demo_user)
+            print("✅ Demo user created: demo@test.com / demo123")
+        
+        # Check if we have enough decisions
+        decision_count = db.query(models.AIDecision).count()
+        
+        if decision_count < 5:
+            # Generate sample AI decisions
+            labels = ["APPROVED", "REJECTED", "APPROVED", "BIASED", "APPROVED", "REJECTED", "RISKY"]
+            attributes = ["male", "female", "male", "female", "male", "female", "male"]
+            
+            for i in range(7 - decision_count):
+                score = round(random.uniform(0.3, 0.95), 2)
+                label = labels[i % len(labels)]
+                attr = attributes[i % len(attributes)]
+                
+                decision = models.AIDecision(
+                    owner_id=demo_user.id,
+                    decision_label=label,
+                    score=score,
+                    sensitive_attribute=encrypt_data(attr)
+                )
+                db.add(decision)
+                db.commit()
+                db.refresh(decision)
+                
+                # Create log entry
+                log_message = f"DEMO: Auto-generated decision {label} with score {score}"
+                log_hash = generate_hash(log_message + str(decision.id))
+                
+                log = models.DecisionLog(
+                    decision_id=decision.id,
+                    actor_user_id=demo_user.id,
+                    event_type="DEMO_DATA",
+                    message=log_message,
+                    hash=log_hash
+                )
+                db.add(log)
+                db.commit()
+            
+            print(f"✅ Generated {7 - decision_count} demo AI decisions")
+    
+    except Exception as e:
+        print(f"⚠️ Demo data generation skipped: {e}")
+        db.rollback()
+    finally:
+        db.close()
 
 
 # --------- HEALTH CHECK ---------
@@ -87,30 +159,36 @@ def update_user_role(user_id: int,
     user = crud.get_user(db, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-        
-try:
-    user.role = role_data.role
-    db.commit()
-    return {"status": "success", "new_role": user.role}
-except Exception as e:
-    db.rollback()
-    raise HTTPException(status_code=500, detail="Database error during role update")
+    
+    try:
+        user.role = role_data.role
+        db.commit()
+        return {"status": "success", "new_role": user.role}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Database error during role update")
 
 
 # --------- AUTH ---------
 
+from fastapi.security import OAuth2PasswordRequestForm
+
 @app.post("/auth/login", response_model=schemas.TokenResponse, tags=["auth"])
-def login(data: schemas.LoginRequest, db: Session = Depends(get_db)):
+def login(data: schemas.LoginRequest = None, form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Support both JSON body and form data (for Swagger OAuth2)
+    username = form_data.username if form_data else data.username
+    password = form_data.password if form_data else data.password
+    
     user = (
         db.query(models.User)
-        .filter(models.User.email == data.username)
+        .filter(models.User.email == username)
         .first()
     )
 
     if not user:
-        user = db.query(models.User).filter(models.User.username == data.username).first()
+        user = db.query(models.User).filter(models.User.username == username).first()
 
-    if not user or not verify_password(data.password, user.password_hash):
+    if not user or not verify_password(password, user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -182,12 +260,12 @@ def create_log(
         hash=log_hash,
     )
     
-try:
-    db.add(db_log)
-    db.commit()
-    db.refresh(db_log)
-    return db_log
-except Exception as e:
+    try:
+        db.add(db_log)
+        db.commit()
+        db.refresh(db_log)
+        return db_log
+    except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Error creating log")
 
@@ -218,38 +296,38 @@ def evaluate_decision_ethics(
             owner_id=user_payload["id"],
             decision_label=status_label,
             score=decision_in.score,
-            sensitive_attribute=encrypted_attr # Şifreli kaydet
-    )
-    db.add(db_decision)
-    db.commit()
-    db.refresh(db_decision)
+            sensitive_attribute=encrypted_attr  # Şifreli kaydet
+        )
+        db.add(db_decision)
+        db.commit()
+        db.refresh(db_decision)
 
-    log_message = f"ETHICS EVALUATION: User {user_payload['sub']} processed decision. Result: {status_label}. Reason: {explanation}"
-  
-    log_hash = generate_hash(log_message + str(db_decision.id) + str(user_payload["id"]))
+        log_message = f"ETHICS EVALUATION: User {user_payload['sub']} processed decision. Result: {status_label}. Reason: {explanation}"
+      
+        log_hash = generate_hash(log_message + str(db_decision.id) + str(user_payload["id"]))
 
-    db_log = models.DecisionLog(
-        decision_id=db_decision.id,
-        actor_user_id=user_payload["id"],
-        event_type="ETHICS_EVALUATION",
-        message=log_message,
-        hash=log_hash,
-    )
+        db_log = models.DecisionLog(
+            decision_id=db_decision.id,
+            actor_user_id=user_payload["id"],
+            event_type="ETHICS_EVALUATION",
+            message=log_message,
+            hash=log_hash,
+        )
 
-    db.add(db_log)
-    db.commit()
+        db.add(db_log)
+        db.commit()
 
-    return {
-        "decision_id": db_decision.id,
-        "ethics_status": status_label,
-        "explanation": explanation,
-        "log_hash": log_hash,
-    }
+        return {
+            "decision_id": db_decision.id,
+            "ethics_status": status_label,
+            "explanation": explanation,
+            "log_hash": log_hash,
+        }
 
-except Exception as e:
-    db.rollback() # Bir hata olursa yapılanları geri al
-    print(f"Error during ethics evaluation: {e}")
-    raise HTTPException(status_code=500, detail="System error during evaluation")
+    except Exception as e:
+        db.rollback()  # Bir hata olursa yapılanları geri al
+        print(f"Error during ethics evaluation: {e}")
+        raise HTTPException(status_code=500, detail="System error during evaluation")
 
 # --------- ADMIN AUDIT LOGS ---------
 
@@ -288,3 +366,206 @@ def get_dashboard_stats(
         "fairness_score": round(fairness, 2),
         "system_health": 100
     }
+
+
+# --------- AI ANALYSIS ENDPOINTS ---------
+
+import pandas as pd
+from pathlib import Path
+import sys
+
+# Add project root to path for services import
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+from services.fairness_evaluator import FairnessEvaluator
+from services.explainer import FairnessExplainer
+from services.model_trainer import ModelTrainer
+from services.decision_explainer import DecisionExplainer
+
+# Initialize AI services (lazy load)
+_fairness_evaluator = None
+_fairness_explainer = None
+_model_trainer = None
+_decision_explainer = None
+_trained_model = None
+_feature_names = None
+_training_data = None
+
+
+def get_ai_services():
+    """Lazy initialization of AI services"""
+    global _fairness_evaluator, _fairness_explainer, _model_trainer, _decision_explainer
+    global _trained_model, _feature_names, _training_data
+    
+    if _fairness_evaluator is None:
+        _fairness_evaluator = FairnessEvaluator()
+        _fairness_explainer = FairnessExplainer()
+        _model_trainer = ModelTrainer()
+        _decision_explainer = DecisionExplainer()
+        
+        # Train model on startup for decision explanations
+        try:
+            dataset_path = project_root / "datasets" / "dummy.csv"
+            if dataset_path.exists():
+                df = pd.read_csv(dataset_path)
+                _trained_model, _feature_names, _training_data = _model_trainer.train(
+                    df, target_col="approved", drop_cols=["gender", "approved"]
+                )
+        except Exception as e:
+            print(f"Warning: Could not train model: {e}")
+    
+    return {
+        "evaluator": _fairness_evaluator,
+        "explainer": _fairness_explainer,
+        "trainer": _model_trainer,
+        "decision_explainer": _decision_explainer,
+        "model": _trained_model,
+        "feature_names": _feature_names,
+        "training_data": _training_data
+    }
+
+
+@app.post(
+    "/ai/analyze-fairness",
+    response_model=schemas.FairnessAnalysisResponse,
+    tags=["ai"],
+)
+def analyze_fairness(
+    request: schemas.FairnessAnalysisRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Analyze fairness metrics on a dataset.
+    Uses FairnessEvaluator to calculate demographic parity and equalized odds.
+    """
+    services = get_ai_services()
+    
+    # Determine dataset path
+    dataset_name = request.dataset_name
+    if dataset_name == "biased":
+        dataset_path = project_root / "datasets" / "biased.csv"
+    else:
+        dataset_path = project_root / "datasets" / "dummy.csv"
+        dataset_name = "balanced"
+    
+    if not dataset_path.exists():
+        raise HTTPException(status_code=404, detail=f"Dataset not found: {dataset_name}")
+    
+    try:
+        df = pd.read_csv(dataset_path)
+        
+        # Run fairness evaluation
+        evaluation = services["evaluator"].evaluate(df)
+        
+        # Generate explanation
+        explanation = services["explainer"].generate_explanation(evaluation, dataset_name)
+        
+        return {
+            "dataset_name": dataset_name,
+            "metrics": evaluation["metrics"],
+            "risk_analysis": evaluation["risk_analysis"],
+            "explanation": explanation
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+
+@app.post(
+    "/ai/explain-decision",
+    response_model=schemas.DecisionExplanationResponse,
+    tags=["ai"],
+)
+def explain_decision(
+    request: schemas.DecisionExplanationRequest,
+    current_user=Depends(get_current_user),
+):
+    """
+    Explain a single AI decision using LIME.
+    Provides interpretable reasons for the model's prediction.
+    """
+    services = get_ai_services()
+    
+    if services["model"] is None:
+        raise HTTPException(
+            status_code=503, 
+            detail="Model not available. Please ensure training data exists."
+        )
+    
+    try:
+        # Create instance from request
+        instance = pd.Series({
+            "income": request.income,
+            "age": request.age,
+            "credit_score": request.credit_score
+        })
+        
+        # Get LIME explanation
+        explanation = services["decision_explainer"].explain_decision(
+            model=services["model"],
+            feature_names=services["feature_names"],
+            instance_row=instance,
+            training_data=services["training_data"]
+        )
+        
+        return explanation
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Explanation failed: {str(e)}")
+
+
+@app.get(
+    "/ai/metrics",
+    response_model=schemas.AIMetricsResponse,
+    tags=["ai"],
+)
+def get_ai_metrics(current_user=Depends(get_current_user)):
+    """
+    Get AI fairness metrics for dashboard display.
+    Analyzes both balanced and biased datasets and returns summary.
+    """
+    services = get_ai_services()
+    
+    try:
+        results = []
+        
+        for dataset_name in ["dummy.csv", "biased.csv"]:
+            dataset_path = project_root / "datasets" / dataset_name
+            if dataset_path.exists():
+                df = pd.read_csv(dataset_path)
+                evaluation = services["evaluator"].evaluate(df)
+                results.append(evaluation)
+        
+        if not results:
+            return {
+                "demographic_parity": 0.0,
+                "equalized_odds": 0.0,
+                "overall_risk": "UNKNOWN",
+                "datasets_analyzed": 0
+            }
+        
+        # Average metrics across datasets
+        avg_dp = sum(r["metrics"]["demographic_parity_difference"] for r in results) / len(results)
+        avg_eo = sum(r["metrics"]["equalized_odds_difference"] for r in results) / len(results)
+        
+        # Determine overall risk (worst case)
+        risks = [r["risk_analysis"]["overall_risk"] for r in results]
+        if "HIGH" in risks:
+            overall = "HIGH"
+        elif "MEDIUM" in risks:
+            overall = "MEDIUM"
+        else:
+            overall = "LOW"
+        
+        return {
+            "demographic_parity": round(avg_dp, 4),
+            "equalized_odds": round(avg_eo, 4),
+            "overall_risk": overall,
+            "datasets_analyzed": len(results)
+        }
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Metrics calculation failed: {str(e)}")
+
