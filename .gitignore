@@ -1,5 +1,37 @@
-venv/
-__pycache__/
-*.pyc
+# Environment variables
 .env
-.env.*
+.env.local
+
+# Virtual environment
+.venv/
+venv/
+env/
+ENV/
+
+
+# Logs
+logs/
+*.log
+
+# Outputs (opsiyonel - results'ı paylaşmak istemiyorsanız)
+outputs/*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Models (büyük dosyalar)
+models/*.pkl
+models/*.joblib
+models/*.h5
