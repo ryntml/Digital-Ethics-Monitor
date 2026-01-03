@@ -13,8 +13,10 @@ ENV/
 logs/
 *.log
 
-# Outputs (opsiyonel - results'ı paylaşmak istemiyorsanız)
-outputs/*.json
+# Outputs
+outputs/
+*.output.json
+security_audit_report.json
 
 # Python
 __pycache__/

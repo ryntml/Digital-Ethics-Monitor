@@ -6,7 +6,7 @@
  */
 
 // API Base URL - Backend adresi
-const API_BASE_URL = 'http://localhost:8001';
+const API_BASE_URL = 'http://localhost:8000';
 
 /**
  * API Client Class
@@ -158,16 +158,32 @@ const api = new APIClient();
  */
 async function loginUser(username, password) {
     try {
+        // OAuth2 standard usually requires form-urlencoded
+        const params = new URLSearchParams();
+        params.append('username', username);
+        params.append('password', password);
+
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: params
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.detail || 'Giriş başarısız');
+            let errorMessage = 'Giriş başarısız';
+            if (data.detail) {
+                if (typeof data.detail === 'string') {
+                    errorMessage = data.detail;
+                } else if (Array.isArray(data.detail)) {
+                    // FastAPI validation errors
+                    errorMessage = data.detail.map(e => `${e.loc ? e.loc[1] + ': ' : ''}${e.msg}`).join('\n');
+                } else {
+                    errorMessage = JSON.stringify(data.detail);
+                }
+            }
+            throw new Error(errorMessage);
         }
 
         // Token'ı kaydet

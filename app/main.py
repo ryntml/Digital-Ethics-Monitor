@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from . import models, schemas, crud
-from .database import engine, Base, get_db
+from .database import engine, Base, get_db, SessionLocal
 from .security import verify_password, create_access_token
 from .security import get_current_user, require_roles  # get_current_user swagger oauth için gerekli
 from .security import generate_hash, encrypt_data
